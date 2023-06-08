@@ -52,11 +52,7 @@ class Player(pygame.sprite.Sprite):
         if self.rect.bottom >= SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
 
-# Initialize pygame
-pygame.init()
-
-# Define the enemy object by extending pygame.sprite.Sprite
-# The surface you draw on the screen is now an attribute of 'enemy'
+#Enemy class
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super(Enemy, self).__init__()
@@ -70,16 +66,22 @@ class Enemy(pygame.sprite.Sprite):
         )
         self.speed = random.randint(5, 20)
 
-    # Move the sprite based on speed
-    # Remove the sprite when it passes the left edge of the screen
     def update(self):
         self.rect.move_ip(-self.speed, 0)
         if self.rect.right < 0:
             self.kill()
 
+
+# Initialize pygame
+pygame.init()
+
 # Create the screen object
 # The size is determined by the constant SCREEN_WIDTH and SCREEN_HEIGHT
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+#Create a custom event
+ADDENEMY = pygame.USEREVENT + 1
+pygame.time.set_timer(ADDENEMY, 250)
 
 # Instantiate player. Right now, this is just a rectangle.
 player = Player()
@@ -93,6 +95,7 @@ all_sprites.add(player)
 
 # Variable to keep the main loop running
 running = True
+count = 0
 
 # Main loop
 while running:
@@ -107,11 +110,21 @@ while running:
         elif event.type == QUIT:
             running = False
 
+        #Add new enemy
+        elif event.type == ADDENEMY:
+            #Create new enemy
+            new_enemy = Enemy()
+            enemies.add(new_enemy)
+            all_sprites.add(new_enemy)
+
     # Get all the keys currently pressed
     pressed_keys = pygame.key.get_pressed()
 
     # Update the player sprite based on user keypresses
     player.update(pressed_keys)
+
+    #Update enemy position
+    enemies.update()
 
     # Fill the screen with black
     screen.fill((0, 0, 0))
@@ -120,9 +133,17 @@ while running:
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
 
-    # Draw the player on the screen
-    screen.blit(player.surf, player.rect)
-
+    #Check if any enemies have collied wit the player
+    if pygame.sprite.spritecollideany(player, enemies):
+        #if so - remove the player and stop the loop
+        # player.kill()
+        count += 1
+        print("Player has been hit {} times".format(count))
+        if count == 10:
+            player.kill()
+            print("\nTHE GAME IS OVER YOU GOT HIT {} TIMES\n".format(count))
+            running = False
+        
     # Update the display
     pygame.display.flip()
 
